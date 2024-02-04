@@ -188,7 +188,8 @@ func New(
 
 func parseNamespaceSelector(selectorArg string) (*metav1.LabelSelector, error) {
 	selector := &metav1.LabelSelector{
-		MatchLabels: make(map[string]string),
+		MatchLabels:      make(map[string]string),
+		MatchExpressions: make([]metav1.LabelSelectorRequirement, 0),
 	}
 
 	selectorStrs := strings.Split(selectorArg, ",")
@@ -197,7 +198,17 @@ func parseNamespaceSelector(selectorArg string) (*metav1.LabelSelector, error) {
 		if len(kv) != 2 || kv[0] == "" || kv[1] == "" {
 			return nil, fmt.Errorf("webhook namespace selector must be in the form key1=value1,key2=value2")
 		}
-		selector.MatchLabels[kv[0]] = kv[1]
+		complexKv := strings.SplitN(kv[1], "&&", 2)
+		if len(complexKv) == 2 {
+			selector.MatchExpressions = append(selector.MatchExpressions, metav1.LabelSelectorRequirement{
+				Key:      kv[0],
+				Operator: metav1.LabelSelectorOpIn,
+				Values:   complexKv,
+			})
+		} else {
+			selector.MatchLabels[kv[0]] = kv[1]
+		}
+
 	}
 
 	return selector, nil

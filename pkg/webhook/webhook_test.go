@@ -219,4 +219,13 @@ func TestNamespaceSelectorParsing(t *testing.T) {
 			"val2": "id2",
 		},
 	}, t)
+	testSelector("val=id&&id2", &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{
+			{
+				Key:      "val",
+				Operator: metav1.LabelSelectorOpIn,
+				Values:   []string{"id", "id2"},
+			},
+		},
+	}, t)
 }
